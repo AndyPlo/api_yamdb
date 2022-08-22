@@ -1,1 +1,1 @@
-print('Bless you')
+print('Go to Hell')
