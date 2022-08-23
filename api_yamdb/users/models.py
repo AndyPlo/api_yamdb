@@ -15,7 +15,7 @@ class User(AbstractUser):
     last_name = models.CharField(max_length=150, blank=True)
     bio = models.TextField(blank=True)
     role = models.SlugField(choices=ROLES, default='user')
-    password = None
+    # password = None
 
     class Meta:
         constraints = [
