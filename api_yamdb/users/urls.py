@@ -4,12 +4,13 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
-from .views import UserViewSet, UserProfileViewSet
+from .views import UserViewSet, UserProfileViewSet, SignUpViewSet
 
 v1_router = routers.DefaultRouter()
 
 v1_router.register(r'users/me', UserProfileViewSet, basename='profile')
 v1_router.register(r'users', UserViewSet)
+v1_router.register(r'auth/signup', SignUpViewSet, basename='signup')
 
 urlpatterns = [
     path('v1/', include(v1_router.urls)),
