@@ -2,10 +2,11 @@ from rest_framework import viewsets, mixins
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import LimitOffsetPagination
 from .models import User
-from .serializers import UserSerializer, SignUpSerializer
+from .serializers import UserSerializer, SignUpSerializer, TokenSerializer
 from api.permissions import IsAdmin
 from django.core.mail import send_mail
 from django.contrib.auth.tokens import default_token_generator
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 
 class UserProfileViewSet(viewsets.ModelViewSet):
@@ -39,3 +40,7 @@ class SignUpViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
             'from@example.com',
             [serializer.validated_data['email']]
         )
+
+
+class MyTokenView(TokenObtainPairView):
+    serializer_class = TokenSerializer

@@ -1,5 +1,6 @@
 from rest_framework import serializers, validators
 from .models import User
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -40,3 +41,19 @@ class SignUpSerializer(serializers.ModelSerializer):
                 'You cannot use this username!'
             )
         return data
+
+
+class TokenSerializer(TokenObtainPairSerializer):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # self.fields['password'].required = False
+
+    def validate(self, attrs):
+        # attrs.update({'password': ''})
+        return super(TokenSerializer, self).validate(attrs)
+
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        return token
