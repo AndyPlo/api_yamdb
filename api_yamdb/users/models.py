@@ -11,8 +11,8 @@ ROLES = [
 class User(AbstractUser):
     username = models.SlugField(max_length=150, unique=True)
     email = models.EmailField(max_length=254)
-    first_name = models.CharField(max_length=150, blank=True)
-    last_name = models.CharField(max_length=150, blank=True)
+    # first_name = models.CharField(max_length=150, blank=True)
+    # last_name = models.CharField(max_length=150, blank=True)
     bio = models.TextField(blank=True)
     role = models.SlugField(choices=ROLES, default='user')
     # password = None
