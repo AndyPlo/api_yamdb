@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'django_filters',
     'users.apps.UsersConfig',
     'api.apps.ApiConfig',
     'reviews.apps.ReviewsConfig',
@@ -92,9 +93,9 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# Internationalization
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'ru'
 
 TIME_ZONE = 'UTC'
 

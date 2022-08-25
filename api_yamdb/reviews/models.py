@@ -26,6 +26,7 @@ class Title(models.Model):
         null=True,
         related_name='titles'
     )
+    description = models.TextField()
 
     def __str__(self):
         return self.name

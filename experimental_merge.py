@@ -1,1 +1,0 @@
-print('Go to Hell')
