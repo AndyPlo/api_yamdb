@@ -9,12 +9,16 @@ ROLES = [
 
 
 class User(AbstractUser):
-    bio = models.TextField(
-        'Биография',
-        blank=True
-    )
-    role = models.SlugField(
-        'Роль',
-        choices=ROLES,
-        default='user'
-    )
+    username = models.SlugField(max_length=150, unique=True)
+    email = models.EmailField(max_length=254)
+    bio = models.TextField(blank=True)
+    role = models.SlugField(choices=ROLES, default='user')
+    confirmation_code = models.SlugField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['username', 'email'],
+                name='unique_user'
+            )
+        ]
