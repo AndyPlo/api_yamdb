@@ -57,11 +57,11 @@ class TitleCreateSerializer(serializers.ModelSerializer):
         queryset=Category.objects.all()
     )
     rating = serializers.SerializerMethodField()
-    '''genre = serializers.SlugRelatedField(
+    genre = serializers.SlugRelatedField(
         many=True,
         slug_field='slug',
         queryset=Genre.objects.all()
-    )'''
+    )
 
     class Meta:
         model = Title
@@ -72,22 +72,24 @@ class TitleCreateSerializer(serializers.ModelSerializer):
             'rating',
             'description',
             'category',
-            #'genre',
+            'genre',
         )
 
     def get_rating(self, obj):
         return 0
 
     def create(self, validated_data):
-        #category_data = validated_data.pop('category')
-        #genres = validated_data.pop('genre')
+        genres = validated_data.pop('genre')
         title = Title.objects.create(**validated_data)
-        '''for genre in genres:
-            current_genre, status = Genre.objects.get_or_create(**genre)
+        for genre in genres:
+            current_genre = Genre.objects.all().filter(
+                name=genre.name
+            )
             Genre_title.objects.create(
-                genre_id=current_genre,
-                title_id=title.id
-            )'''
+                genre_id=current_genre[0],
+                title_id=title
+            )
+        #response_title = Title.objects.all().filter(id=title.id)
         return (title)
 
     def validate_year(self, value):
