@@ -3,7 +3,7 @@ from rest_framework.response import Response
 
 import datetime as dt
 
-from reviews.models import Category, Genre_title, Title, Genre
+from reviews.models import Category, Genre_title, Title, Genre, Review
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -25,6 +25,7 @@ class GenreSerializer(serializers.ModelSerializer):
 class TitleReadSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(many=True, read_only=True)
+    rating = serializers.SerializerMethodField()
 
     class Meta:
         model = Title
@@ -32,10 +33,22 @@ class TitleReadSerializer(serializers.ModelSerializer):
             'id',
             'name',
             'year',
+            'rating',
             'description',
             'category',
             'genre',
         )
+
+    def get_rating(self, obj):
+        title_reviews = Review.objects.all().filter(
+            title_id=obj.id
+        )
+        if not title_reviews:
+            return 0
+        rating = 0
+        for title_review in title_reviews:
+            rating += title_review.score
+        return (rating)
 
 
 class TitleCreateSerializer(serializers.ModelSerializer):
@@ -43,6 +56,7 @@ class TitleCreateSerializer(serializers.ModelSerializer):
         slug_field='slug',
         queryset=Category.objects.all()
     )
+    rating = serializers.SerializerMethodField()
     '''genre = serializers.SlugRelatedField(
         many=True,
         slug_field='slug',
@@ -55,10 +69,14 @@ class TitleCreateSerializer(serializers.ModelSerializer):
             'id',
             'name',
             'year',
+            'rating',
             'description',
             'category',
             #'genre',
         )
+
+    def get_rating(self, obj):
+        return 0
 
     def create(self, validated_data):
         #category_data = validated_data.pop('category')
@@ -70,8 +88,7 @@ class TitleCreateSerializer(serializers.ModelSerializer):
                 genre_id=current_genre,
                 title_id=title.id
             )'''
-        serializer = TitleReadSerializer(title)
-        return Response(serializer.data)
+        return (title)
 
     def validate_year(self, value):
         year = dt.date.today().year
