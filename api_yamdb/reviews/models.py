@@ -6,7 +6,10 @@ User = get_user_model()
 
 class Category(models.Model):
     name = models.CharField(max_length=200)
-    slug = models.SlugField(max_length=200, unique=True)
+    slug = models.SlugField(
+        max_length=200,
+        unique=True
+    )
 
     def __str__(self):
         return self.name
@@ -16,29 +19,12 @@ class Category(models.Model):
         verbose_name_plural = 'Категории'
 
 
-class Title(models.Model):
-    name = models.CharField(max_length=200)
-    year = models.IntegerField()
-    category = models.ForeignKey(
-        Category,
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
-        related_name='titles'
-    )
-    description = models.TextField()
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        verbose_name = 'Произведение'
-        verbose_name_plural = 'Произведения'
-
-
 class Genre(models.Model):
     name = models.CharField(max_length=200)
-    slug = models.SlugField(max_length=200, unique=True)
+    slug = models.SlugField(
+        max_length=200,
+        unique=True
+    )
 
     def __str__(self):
         return self.name
@@ -46,6 +32,30 @@ class Genre(models.Model):
     class Meta:
         verbose_name = 'Жанр'
         verbose_name_plural = 'Жанры'
+
+
+class Title(models.Model):
+    name = models.CharField(max_length=200)
+    year = models.IntegerField()
+    description = models.TextField()
+    genres = models.ManyToManyField(
+        Genre,
+        through='Genre_title'
+    )
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name='titles'
+    )
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = 'Произведение'
+        verbose_name_plural = 'Произведения'
 
 
 class Genre_title(models.Model):
