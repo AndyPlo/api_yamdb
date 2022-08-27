@@ -4,6 +4,24 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 import uuid
 from django.core.mail import send_mail
+from rest_framework.response import Response
+from http import HTTPStatus
+from django.http import JsonResponse
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('username', 'email',
+                  'first_name', 'last_name',
+                  'bio', 'role')
+        read_only_fields = ('role',)
+        validators = [
+            validators.UniqueTogetherValidator(
+                queryset=User.objects.all(),
+                fields=('username', 'email')
+            )
+        ]
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -22,7 +40,7 @@ class UserSerializer(serializers.ModelSerializer):
     def validate(self, data):
         if self.initial_data['username'] == 'me':
             raise serializers.ValidationError(
-                'You cannot use this username!'
+                {"username": ["You cannot use this username!"]}
             )
         return data
 
@@ -38,7 +56,7 @@ class SignUpSerializer(serializers.Serializer):
     def validate(self, attrs):
         if attrs['username'] == 'me':
             raise serializers.ValidationError(
-                'You cannot use this username!'
+                {"username": ["You cannot use this username!"]}
             )
         return attrs
 
