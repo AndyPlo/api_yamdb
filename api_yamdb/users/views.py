@@ -4,8 +4,6 @@ from rest_framework.pagination import LimitOffsetPagination
 from .models import User
 from .serializers import UserSerializer, SignUpSerializer, GetTokenSerializer
 from api.permissions import IsAdmin
-from django.core.mail import send_mail
-from django.contrib.auth.tokens import default_token_generator
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 
@@ -28,18 +26,6 @@ class UserViewSet(viewsets.ModelViewSet):
 
 class SignUpViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     serializer_class = SignUpSerializer
-
-    def perform_create(self, serializer):
-        serializer.save()
-        user = User.objects.get(username=serializer.validated_data['username'])
-        confirmation_code = default_token_generator.make_token(user)
-        send_mail(
-            'Confirmation code',
-            (f'Confirmation code for {user}'
-             f' is: {confirmation_code[29:]}'),
-            'from@example.com',
-            [serializer.validated_data['email']]
-        )
 
 
 class GetTokenView(TokenObtainPairView):
