@@ -1,6 +1,5 @@
 from api import serializers
 from django.shortcuts import get_object_or_404
-from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
@@ -9,8 +8,8 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from reviews.models import Category, Comment, Genre, Review, Title
 from users.models import User
-from .filters import TitleFilter
 
+from .filters import TitleFilter
 from .permissions import (IsAdmin, IsAdminOrReadOnly,
                           IsAuthorModeratorAdminOrReadOnly)
 from .serializers import (CommentSerializers, GetTokenSerializer,
@@ -55,10 +54,7 @@ class CreateListDestroyViewSet(mixins.CreateModelMixin,
     pass
 
 
-class CategoryViewSet(mixins.CreateModelMixin,
-                      mixins.DestroyModelMixin,
-                      mixins.ListModelMixin,
-                      viewsets.GenericViewSet):
+class CategoryViewSet(CreateListDestroyViewSet):
     queryset = Category.objects.all()
     serializer_class = serializers.CategorySerializer
     pagination_class = PageNumberPagination
@@ -69,10 +65,7 @@ class CategoryViewSet(mixins.CreateModelMixin,
     http_method_names = ['get', 'post', 'delete']
 
 
-class GenreViewSet(mixins.CreateModelMixin,
-                   mixins.DestroyModelMixin,
-                   mixins.ListModelMixin,
-                   viewsets.GenericViewSet):
+class GenreViewSet(CreateListDestroyViewSet):
     queryset = Genre.objects.all()
     serializer_class = serializers.GenreSerializer
     pagination_class = PageNumberPagination
@@ -84,9 +77,6 @@ class GenreViewSet(mixins.CreateModelMixin,
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
-    # serializer_class = serializers.TitleReadSerializer
-    # filter_backends = [DjangoFilterBackend, ]
-    # filterset_fields = ('name', 'year', 'category__slug', 'genre__slug')
     pagination_class = PageNumberPagination
     permission_classes = (IsAdminOrReadOnly,)
     filterset_class = TitleFilter

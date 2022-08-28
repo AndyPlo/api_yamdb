@@ -48,7 +48,7 @@ def review_create(row):
     title, _ = Title.objects.get_or_create(id=row[1])
     Review.objects.get_or_create(
         id=row[0],
-        title_id=title,
+        title=title,
         text=row[2],
         author_id=row[3],
         score=row[4],
@@ -60,7 +60,7 @@ def comment_create(row):
     review, _ = Review.objects.get_or_create(id=row[1])
     Comment.objects.get_or_create(
         id=row[0],
-        review_id=review,
+        review=review,
         text=row[2],
         author_id=row[3],
         pub_date=row[4],
@@ -72,8 +72,8 @@ def genre_title_create(row):
     genre, _ = Genre.objects.get_or_create(id=row[2])
     Genre_title.objects.get_or_create(
         id=row[0],
-        title_id=title,
-        genre_id=genre,
+        title=title,
+        genre=genre,
     )
 
 

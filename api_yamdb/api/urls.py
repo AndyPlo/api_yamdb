@@ -13,12 +13,10 @@ v1_router.register(
     CommentViewSet)
 v1_router.register('categories', CategoryViewSet)
 v1_router.register('genres', GenreViewSet)
-# v1_router.register(r'users/me', UserProfileViewSet, basename='profile')
-v1_router.register(r'users', UserViewSet)
-v1_router.register(r'auth/signup', SignUpViewSet, basename='signup')
+v1_router.register('users', UserViewSet)
+v1_router.register('auth/signup', SignUpViewSet, basename='signup')
 
 urlpatterns = [
-    path('v1/', include(v1_router.urls)),
     path('v1/', include(v1_router.urls)),
     path(
         'v1/auth/token/',

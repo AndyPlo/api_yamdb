@@ -4,8 +4,6 @@ import uuid
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.db.models import Avg
-# from rest_framework import status
-# from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from rest_framework import exceptions, serializers
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -58,7 +56,6 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ('name', 'slug',)
-        # lookup_field = 'slug'
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -66,7 +63,6 @@ class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
         fields = ('name', 'slug')
-        lookup_field = 'id'
 
 
 class TitleReadSerializer(serializers.ModelSerializer):
@@ -85,17 +81,6 @@ class TitleReadSerializer(serializers.ModelSerializer):
             'category',
             'genre',
         )
-
-    # def get_rating(self, obj):
-    #     title_reviews = Review.objects.all().filter(
-    #         title=obj.id
-    #     )
-    #     if not title_reviews:
-    #         return 0
-    #     rating = 0
-    #     for title_review in title_reviews:
-    #         rating += title_review.score
-    #     return (rating)
 
     def get_rating(self, obj):
         rating = obj.reviews.aggregate(Avg('score')).get('score__avg')
@@ -140,7 +125,6 @@ class TitleCreateSerializer(serializers.ModelSerializer):
                 genre=current_genre[0],
                 title=title
             )
-        # response_title = Title.objects.all().filter(id=title.id)
         return (title)
 
     def validate_year(self, value):
@@ -150,44 +134,37 @@ class TitleCreateSerializer(serializers.ModelSerializer):
         return value
 
 
-# class UserProfileSerializer(serializers.ModelSerializer):
-#     username = serializers.CharField(required=True)
-#     email = serializers.EmailField(required=True)
-#     role = serializers.StringRelatedField(read_only=True)
-
-#     class Meta:
-#         model = User
-#         fields = ('username', 'email',
-#                   'first_name', 'last_name',
-#                   'bio', 'role')
-
-
 class UserSerializer(serializers.ModelSerializer):
     role = serializers.StringRelatedField(read_only=True)
 
     class Meta:
         model = User
         ordering = ['-username']
-        fields = ('username', 'email',
-                  'first_name', 'last_name',
-                  'bio', 'role')
+        fields = (
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+            'bio',
+            'role'
+        )
 
     def validate(self, data):
         if self.initial_data.get('username') == 'me':
             raise serializers.ValidationError(
-                {"username": ["You cannot use this username!"]}
+                {"username": ["Вы не можете использоват этот username!"]}
             )
         if User.objects.filter(
             username=self.initial_data.get('username')
         ).exists():
             raise serializers.ValidationError(
-                {"username": ["This username has already exist!"]}
+                {"username": ["Этот username уже зарегистрирован!"]}
             )
         if User.objects.filter(
             email=self.initial_data.get('email')
         ).exists():
             raise serializers.ValidationError(
-                {"email": ["This email has already exist!"]}
+                {"email": ["Этот email уже зарегистрирован!"]}
             )
         return data
 
@@ -197,26 +174,31 @@ class UserAdminSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         ordering = ['-username']
-        fields = ('username', 'email',
-                  'first_name', 'last_name',
-                  'bio', 'role')
+        fields = (
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+            'bio',
+            'role'
+        )
 
     def validate(self, data):
         if self.initial_data.get('username') == 'me':
             raise serializers.ValidationError(
-                {"username": ["You cannot use this username!"]}
+                {"username": ["Вы не можете использоват этот username!"]}
             )
         if User.objects.filter(
             username=self.initial_data.get('username')
         ).exists():
             raise serializers.ValidationError(
-                {"username": ["This username has already exist!"]}
+                {"username": ["Этот username уже зарегистрирован!"]}
             )
         if User.objects.filter(
             email=self.initial_data.get('email')
         ).exists():
             raise serializers.ValidationError(
-                {"email": ["This email has already exist!"]}
+                {"email": ["Этот email уже зарегистрирован!"]}
             )
         return data
 
@@ -232,19 +214,19 @@ class SignUpSerializer(serializers.Serializer):
     def validate(self, attrs):
         if self.initial_data.get('username') == 'me':
             raise serializers.ValidationError(
-                {"username": ["You cannot use this username!"]}
+                {"username": ["Вы не можете использоват этот username!"]}
             )
         if User.objects.filter(
             username=self.initial_data.get('username')
         ).exists():
             raise serializers.ValidationError(
-                {"username": ["This username has already exist!"]}
+                {"username": ["Этот username уже зарегистрирован!"]}
             )
         if User.objects.filter(
             email=self.initial_data.get('email')
         ).exists():
             raise serializers.ValidationError(
-                {"email": ["This email has already exist!"]}
+                {"email": ["Этот email уже зарегистрирован!"]}
             )
         return attrs
 
@@ -263,8 +245,8 @@ class SignUpSerializer(serializers.Serializer):
                 confirmation_code=confirmation_code
             )
         send_mail(
-            'Confirmation code',
-            (f'Confirmation code for "{user[0].username}" is:'
+            'Код подтверждения',
+            (f'Код подтверждения для пользователя "{user[0].username}":'
                 f' {confirmation_code}'),
             'from@example.com',
             [validated_data['email']]
@@ -290,5 +272,5 @@ class GetTokenSerializer(serializers.Serializer):
             refresh = RefreshToken.for_user(self.user)
             return {'token': str(refresh.access_token)}
         raise exceptions.ValidationError(
-            'No active account found with the given credentials.'
+            'Проверьте правильность указанных для получения токена данных.'
         )
