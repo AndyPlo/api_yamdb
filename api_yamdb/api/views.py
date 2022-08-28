@@ -11,15 +11,17 @@ from rest_framework.permissions import IsAuthenticated
 from users.models import User
 from .serializers import GetTokenSerializer, UserProfileSerializer
 from .serializers import UserSerializer, SignUpSerializer
-from api.permissions import IsAdmin
+from .permissions import IsAdmin, IsAdminOrReadOnly
+from .permissions import IsAuthorModeratorAdminOrReadOnly
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework import status
 from rest_framework.response import Response
-from http import HTTPStatus
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializers
     pagination_class = LimitOffsetPagination
+    permission_classes = (IsAuthorModeratorAdminOrReadOnly,)
     queryset = Review.objects.all()
 
     def get_queryset(self):
@@ -34,6 +36,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializers
     pagination_class = LimitOffsetPagination
+    permission_classes = (IsAuthorModeratorAdminOrReadOnly,)
     queryset = Comment.objects.all()
 
     def get_queryset(self):
@@ -56,6 +59,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = serializers.CategorySerializer
     pagination_class = LimitOffsetPagination
+    permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
@@ -65,6 +69,7 @@ class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = serializers.GenreSerializer
     pagination_class = LimitOffsetPagination
+    permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
@@ -72,10 +77,11 @@ class GenreViewSet(viewsets.ModelViewSet):
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
-    # serializer_class = TitleReadSerializer
+    serializer_class = serializers.TitleReadSerializer
     pagination_class = LimitOffsetPagination
+    permission_classes = (IsAdminOrReadOnly,)
     # filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('name', 'year', 'category')
+    # filterset_fields = ('name', 'year', 'category')
 
     def get_serializer_class(self):
         if self.request.method in permissions.SAFE_METHODS:
@@ -96,7 +102,7 @@ class UserProfileViewSet(mixins.ListModelMixin,
     def patch(self, request):
         if 'role' in request.data:
             raise validators.ValidationError(
-                {"role": ["You cannot change this field."]}
+                {'user'}
             )
         user = User.objects.filter(pk=self.request.user.pk)
         user.update(**request.data)
@@ -114,8 +120,13 @@ class UserViewSet(viewsets.ModelViewSet):
 class SignUpViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     serializer_class = SignUpSerializer
 
-    def retrieve(self, request):
-        return Response(request, status=HTTPStatus.OK)
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            serializer.data, status=status.HTTP_200_OK, headers=headers)
 
 
 class GetTokenView(TokenObtainPairView):

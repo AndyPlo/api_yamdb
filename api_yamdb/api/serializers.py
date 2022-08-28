@@ -7,9 +7,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 import uuid
 from django.core.mail import send_mail
+# from rest_framework import status
 # from rest_framework.response import Response
-# from http import HTTPStatus
-# from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
 
 
 class ReviewSerializers(serializers.ModelSerializer):
@@ -65,13 +65,13 @@ class GenreSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Genre
-        fields = ('name', 'slug',)
+        fields = ('name', 'slug')
         lookup_field = 'id'
 
 
 class TitleReadSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
-    genre = GenreSerializer(many=True, read_only=True)
+    genre = GenreSerializer(many=True)
     rating = serializers.SerializerMethodField()
 
     class Meta:
@@ -239,8 +239,8 @@ class GetTokenSerializer(serializers.Serializer):
         self.fields['confirmation_code'] = serializers.SlugField()
 
     def validate(self, attrs):
+        self.user = get_object_or_404(User, username=attrs['username'])
         try:
-            self.user = User.objects.get(username=attrs['username'])
             if attrs['confirmation_code'] == self.user.confirmation_code:
                 refresh = RefreshToken.for_user(self.user)
                 return {'token': str(refresh.access_token)}
