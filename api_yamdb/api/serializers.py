@@ -1,4 +1,4 @@
-from rest_framework import serializers, validators, exceptions
+from rest_framework import serializers, exceptions
 from reviews.models import Comment, Review
 from reviews.models import Category, Genre_title, Title, Genre
 import datetime as dt
@@ -71,7 +71,7 @@ class GenreSerializer(serializers.ModelSerializer):
 
 class TitleReadSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
-    genre = GenreSerializer(many=True)
+    genre = GenreSerializer(many=True, read_only=True)
     rating = serializers.SerializerMethodField()
 
     class Meta:
@@ -146,38 +146,73 @@ class TitleCreateSerializer(serializers.ModelSerializer):
         return value
 
 
-class UserProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ('username', 'email',
-                  'first_name', 'last_name',
-                  'bio', 'role')
-        read_only_fields = ('role',)
-        validators = [
-            validators.UniqueTogetherValidator(
-                queryset=User.objects.all(),
-                fields=('username', 'email')
-            )
-        ]
+# class UserProfileSerializer(serializers.ModelSerializer):
+#     username = serializers.CharField(required=True)
+#     email = serializers.EmailField(required=True)
+#     role = serializers.StringRelatedField(read_only=True)
+
+#     class Meta:
+#         model = User
+#         fields = ('username', 'email',
+#                   'first_name', 'last_name',
+#                   'bio', 'role')
 
 
 class UserSerializer(serializers.ModelSerializer):
+    role = serializers.StringRelatedField(read_only=True)
+
     class Meta:
         model = User
+        ordering = ['-username']
         fields = ('username', 'email',
                   'first_name', 'last_name',
                   'bio', 'role')
-        validators = [
-            validators.UniqueTogetherValidator(
-                queryset=User.objects.all(),
-                fields=('username', 'email')
-            )
-        ]
 
     def validate(self, data):
-        if self.initial_data['username'] == 'me':
+        if self.initial_data.get('username') == 'me':
             raise serializers.ValidationError(
                 {"username": ["You cannot use this username!"]}
+            )
+        if User.objects.filter(
+            username=self.initial_data.get('username')
+        ).exists():
+            raise serializers.ValidationError(
+                {"username": ["This username has already exist!"]}
+            )
+        if User.objects.filter(
+            email=self.initial_data.get('email')
+        ).exists():
+            raise serializers.ValidationError(
+                {"email": ["This email has already exist!"]}
+            )
+        return data
+
+
+class UserAdminSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        ordering = ['-username']
+        fields = ('username', 'email',
+                  'first_name', 'last_name',
+                  'bio', 'role')
+
+    def validate(self, data):
+        if self.initial_data.get('username') == 'me':
+            raise serializers.ValidationError(
+                {"username": ["You cannot use this username!"]}
+            )
+        if User.objects.filter(
+            username=self.initial_data.get('username')
+        ).exists():
+            raise serializers.ValidationError(
+                {"username": ["This username has already exist!"]}
+            )
+        if User.objects.filter(
+            email=self.initial_data.get('email')
+        ).exists():
+            raise serializers.ValidationError(
+                {"email": ["This email has already exist!"]}
             )
         return data
 
@@ -191,9 +226,21 @@ class SignUpSerializer(serializers.Serializer):
         self.fields['email'] = serializers.EmailField()
 
     def validate(self, attrs):
-        if attrs['username'] == 'me':
+        if self.initial_data.get('username') == 'me':
             raise serializers.ValidationError(
                 {"username": ["You cannot use this username!"]}
+            )
+        if User.objects.filter(
+            username=self.initial_data.get('username')
+        ).exists():
+            raise serializers.ValidationError(
+                {"username": ["This username has already exist!"]}
+            )
+        if User.objects.filter(
+            email=self.initial_data.get('email')
+        ).exists():
+            raise serializers.ValidationError(
+                {"email": ["This email has already exist!"]}
             )
         return attrs
 
@@ -203,26 +250,21 @@ class SignUpSerializer(serializers.Serializer):
             username=validated_data['username'],
             email=validated_data['email']
         )
-        try:
-            if user.exists():
-                user.update(confirmation_code=confirmation_code)
-            else:
-                User.objects.create(
-                    username=validated_data['username'],
-                    email=validated_data['email'],
-                    confirmation_code=confirmation_code
-                )
-            send_mail(
-                'Confirmation code',
-                (f'Confirmation code for "{user[0].username}" is:'
-                 f' {confirmation_code}'),
-                'from@example.com',
-                [validated_data['email']]
+        if user.exists():
+            user.update(confirmation_code=confirmation_code)
+        else:
+            User.objects.create(
+                username=validated_data['username'],
+                email=validated_data['email'],
+                confirmation_code=confirmation_code
             )
-        except Exception:
-            raise serializers.ValidationError(
-                'No active account found with the given credentials.'
-            )
+        send_mail(
+            'Confirmation code',
+            (f'Confirmation code for "{user[0].username}" is:'
+                f' {confirmation_code}'),
+            'from@example.com',
+            [validated_data['email']]
+        )
         return validated_data
 
     class Meta:
@@ -240,11 +282,9 @@ class GetTokenSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         self.user = get_object_or_404(User, username=attrs['username'])
-        try:
-            if attrs['confirmation_code'] == self.user.confirmation_code:
-                refresh = RefreshToken.for_user(self.user)
-                return {'token': str(refresh.access_token)}
-        except Exception:
-            raise exceptions.AuthenticationFailed(
-                'No active account found with the given credentials.'
-            )
+        if attrs['confirmation_code'] == self.user.confirmation_code:
+            refresh = RefreshToken.for_user(self.user)
+            return {'token': str(refresh.access_token)}
+        raise exceptions.ValidationError(
+            'No active account found with the given credentials.'
+        )
