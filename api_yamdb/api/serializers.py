@@ -19,7 +19,7 @@ class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
         fields = ('name', 'slug',)
-        lookup_field = 'id'
+        lookup_field = 'slug'
 
 
 class TitleReadSerializer(serializers.ModelSerializer):
@@ -89,7 +89,7 @@ class TitleCreateSerializer(serializers.ModelSerializer):
                 genre_id=current_genre[0],
                 title_id=title
             )
-        #response_title = Title.objects.all().filter(id=title.id)
+        response_title = Title.objects.all().filter(id=title.id)
         return (title)
 
     def validate_year(self, value):
