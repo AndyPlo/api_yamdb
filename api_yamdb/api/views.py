@@ -1,3 +1,4 @@
+from unicodedata import name
 from django.shortcuts import render
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, filters, mixins
@@ -35,13 +36,27 @@ class GenreViewSet(viewsets.ModelViewSet):
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all()
-    #serializer_class = TitleReadSerializer
     pagination_class = LimitOffsetPagination
-    filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('name', 'year', 'category')
 
     def get_serializer_class(self):
         if self.request.method in permissions.SAFE_METHODS:
             return serializers.TitleReadSerializer
         return serializers.TitleCreateSerializer
+
+    def get_queryset(self):
+        queryset = Title.objects.all()
+        name = self.request.query_params.get('name')
+        if name is not None:
+            queryset = queryset.filter(name=name)
+        year = self.request.query_params.get('year')
+        if year is not None:
+            queryset = queryset.filter(year=year)
+        category = self.request.query_params.get('category')
+        if category is not None:
+            category = Category.objects.all().filter(slug=category)
+            category_id = category[0].id
+            queryset = queryset.filter(category=category_id)
+        genre = self.request.query_params.get('genre')
+        if genre is not None:
+            queryset = queryset.filter(genre=genre)
+        return queryset

@@ -114,17 +114,6 @@ STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static/'),)
 
 AUTH_USER_MODEL = 'users.User'
 
-REST_FRAMEWORK = {
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
-    ],
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ],
-    # 'DEFAULT_PARSER_CLASSES': [
-    #     'rest_framework.parsers.JSONParser',
-    # ],
-}
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
