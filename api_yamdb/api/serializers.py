@@ -3,6 +3,7 @@ import uuid
 
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
+from django.db.models import Avg
 # from rest_framework import status
 # from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
@@ -31,10 +32,10 @@ class ReviewSerializers(serializers.ModelSerializer):
     def validate(self, data):
         if self.context['request'].method != 'POST':
             return data
-        title_id = self.context['view'].kwargs.get('title_id')
+        title = self.context['view'].kwargs.get('title_id')
         author = self.context['request'].user
         if Review.objects.filter(
-                author=author, title_id=title_id).exists():
+                author=author, title=title).exists():
             raise serializers.ValidationError(
                 'Вы уже написали отзыв к этому произведению.'
             )
@@ -85,16 +86,20 @@ class TitleReadSerializer(serializers.ModelSerializer):
             'genre',
         )
 
+    # def get_rating(self, obj):
+    #     title_reviews = Review.objects.all().filter(
+    #         title=obj.id
+    #     )
+    #     if not title_reviews:
+    #         return 0
+    #     rating = 0
+    #     for title_review in title_reviews:
+    #         rating += title_review.score
+    #     return (rating)
+
     def get_rating(self, obj):
-        title_reviews = Review.objects.all().filter(
-            title_id=obj.id
-        )
-        if not title_reviews:
-            return 0
-        rating = 0
-        for title_review in title_reviews:
-            rating += title_review.score
-        return (rating)
+        rating = obj.reviews.aggregate(Avg('score')).get('score__avg')
+        return round(rating, 1) if rating else rating
 
 
 class TitleCreateSerializer(serializers.ModelSerializer):
@@ -132,8 +137,8 @@ class TitleCreateSerializer(serializers.ModelSerializer):
                 name=genre.name
             )
             Genre_title.objects.create(
-                genre_id=current_genre[0],
-                title_id=title
+                genre=current_genre[0],
+                title=title
             )
         # response_title = Title.objects.all().filter(id=title.id)
         return (title)
