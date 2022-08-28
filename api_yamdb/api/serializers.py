@@ -1,15 +1,15 @@
-from rest_framework import serializers, exceptions
-from reviews.models import Comment, Review
-from reviews.models import Category, Genre_title, Title, Genre
 import datetime as dt
-from users.models import User
-from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth import get_user_model
 import uuid
+
+from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 # from rest_framework import status
 # from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
+from rest_framework import exceptions, serializers
+from rest_framework_simplejwt.tokens import RefreshToken
+from reviews.models import Category, Comment, Genre, Genre_title, Review, Title
+from users.models import User
 
 
 class ReviewSerializers(serializers.ModelSerializer):
@@ -21,21 +21,20 @@ class ReviewSerializers(serializers.ModelSerializer):
         model = Review
         fields = ('id', 'text', 'author', 'score', 'pub_date')
 
-    def validate(self, data):
-        if not 1 < data['score'] < 10:
+    def validate_score(self, value):
+        if not 1 <= value <= 10:
             raise serializers.ValidationError(
                 'Оценка может быть только от 1 до 10!'
             )
-        return data['score']
+        return value
 
-    def validate_author_nomore(self, data):
+    def validate(self, data):
         if self.context['request'].method != 'POST':
             return data
-
         title_id = self.context['view'].kwargs.get('title_id')
         author = self.context['request'].user
         if Review.objects.filter(
-                author=author, title=title_id).exists():
+                author=author, title_id=title_id).exists():
             raise serializers.ValidationError(
                 'Вы уже написали отзыв к этому произведению.'
             )
