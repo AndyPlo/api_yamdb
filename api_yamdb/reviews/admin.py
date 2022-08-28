@@ -29,13 +29,13 @@ class TitleAdmin(admin.ModelAdmin):
 
 @admin.register(Genre_title)
 class GenreTitleAdmin(admin.ModelAdmin):
-    list_display = ('title_id', 'genre_id')
-    list_editable = ('genre_id',)
+    list_display = ('title', 'genre')
+    list_editable = ('genre',)
 
 
 @admin.register(Review)
 class ReviewAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'title_id', 'text', 'author', 'score', 'pub_date',)
+    list_display = ('pk', 'title', 'text', 'author', 'score', 'pub_date',)
     search_fields = ('text', 'score', 'author')
     list_filter = ('pub_date',)
     empty_value_display = '-пусто-'
@@ -43,7 +43,7 @@ class ReviewAdmin(admin.ModelAdmin):
 
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'review_id', 'text', 'author', 'pub_date',)
+    list_display = ('pk', 'review', 'text', 'author', 'pub_date',)
     search_fields = ('text', 'author',)
     list_filter = ('pub_date',)
     empty_value_display = '-пусто-'

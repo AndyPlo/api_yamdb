@@ -6,19 +6,44 @@ User = get_user_model()
 
 class Category(models.Model):
     name = models.CharField(max_length=200)
-    slug = models.SlugField(max_length=200, unique=True)
+    slug = models.SlugField(
+        max_length=200,
+        unique=True
+    )
 
     def __str__(self):
         return self.name
 
     class Meta:
+        ordering = ['name']
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'
+
+
+class Genre(models.Model):
+    name = models.CharField(max_length=200)
+    slug = models.SlugField(
+        max_length=200,
+        unique=True
+    )
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ['name']
+        verbose_name = 'Жанр'
+        verbose_name_plural = 'Жанры'
 
 
 class Title(models.Model):
     name = models.CharField(max_length=200)
     year = models.IntegerField()
+    description = models.TextField()
+    genre = models.ManyToManyField(
+        Genre,
+        through='Genre_title'
+    )
     category = models.ForeignKey(
         Category,
         on_delete=models.SET_NULL,
@@ -31,31 +56,20 @@ class Title(models.Model):
         return self.name
 
     class Meta:
+        ordering = ['name']
         verbose_name = 'Произведение'
         verbose_name_plural = 'Произведения'
 
 
-class Genre(models.Model):
-    name = models.CharField(max_length=200)
-    slug = models.SlugField(max_length=200, unique=True)
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        verbose_name = 'Жанр'
-        verbose_name_plural = 'Жанры'
-
-
 class Genre_title(models.Model):
-    title_id = models.ForeignKey(
+    title = models.ForeignKey(
         Title,
         blank=True,
         null=True,
         on_delete=models.CASCADE,
         related_name='titles'
     )
-    genre_id = models.ForeignKey(
+    genre = models.ForeignKey(
         Genre,
         blank=True,
         null=True,
@@ -71,14 +85,14 @@ class Genre_title(models.Model):
         verbose_name_plural = 'Жанры произведения'
         constraints = [
             models.UniqueConstraint(
-                fields=['title_id', 'genre_id'],
+                fields=['title', 'genre'],
                 name='unique_combination'
             )
         ]
 
 
 class Review(models.Model):
-    title_id = models.ForeignKey(
+    title = models.ForeignKey(
         Title,
         on_delete=models.CASCADE,
         related_name='reviews'
@@ -99,10 +113,16 @@ class Review(models.Model):
         ordering = ['-pub_date']
         verbose_name = 'Отзыв'
         verbose_name_plural = 'Отзывы'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['title', 'author'],
+                name='unique_combination'
+            )
+        ]
 
 
 class Comment(models.Model):
-    review_id = models.ForeignKey(
+    review = models.ForeignKey(
         Review,
         on_delete=models.CASCADE,
         related_name='comments'
