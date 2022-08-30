@@ -111,18 +111,6 @@ class UserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {"username": ["Вы не можете использоват этот username!"]}
             )
-        if User.objects.filter(
-            username=self.initial_data.get('username')
-        ).exists():
-            raise serializers.ValidationError(
-                {"username": ["Этот username уже зарегистрирован!"]}
-            )
-        if User.objects.filter(
-            email=self.initial_data.get('email')
-        ).exists():
-            raise serializers.ValidationError(
-                {"email": ["Этот email уже зарегистрирован!"]}
-            )
         return data
 
 
@@ -144,18 +132,6 @@ class UserAdminSerializer(serializers.ModelSerializer):
         if self.initial_data.get('username') == 'me':
             raise serializers.ValidationError(
                 {"username": ["Вы не можете использоват этот username!"]}
-            )
-        if User.objects.filter(
-            username=self.initial_data.get('username')
-        ).exists():
-            raise serializers.ValidationError(
-                {"username": ["Этот username уже зарегистрирован!"]}
-            )
-        if User.objects.filter(
-            email=self.initial_data.get('email')
-        ).exists():
-            raise serializers.ValidationError(
-                {"email": ["Этот email уже зарегистрирован!"]}
             )
         return data
 

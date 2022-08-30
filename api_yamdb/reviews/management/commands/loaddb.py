@@ -96,13 +96,13 @@ class Command(BaseCommand):
         for filename, row in action.items():
             path = os.path.join(settings.BASE_DIR, "static/data/") + filename
             with open(path, 'r', encoding='utf-8') as file:
+                row_count = sum(1 for row in file)
+            with open(path, 'r', encoding='utf-8') as file:
                 reader = csv.reader(file)
+                bar = IncrementalBar(filename.ljust(17), max=row_count)
                 next(reader)
-                print(reader)
-                # bar = IncrementalBar(filename, max=len(reader))
-                # for row in reader:
-                #     bar.next()
-                #     print(row)
-                #     action[filename](row)
-                # bar.finish()
+                for row in reader:
+                    bar.next()
+                    action[filename](row)
+                bar.finish()
         self.stdout.write("!!!The database has been loaded successfully!!!")
