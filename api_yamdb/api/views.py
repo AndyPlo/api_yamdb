@@ -3,15 +3,15 @@ from django.shortcuts import get_object_or_404
 from rest_framework import filters, mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import (IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from reviews.models import Category, Comment, Genre, Review, Title
 from users.models import User
 
 from .filters import TitleFilter
-from .permissions import (IsAdmin, IsAdminOrReadOnly,
-                          IsAuthorModeratorAdminOrReadOnly)
+from .permissions import IsAdmin, IsAuthorModeratorAdminOrReadOnly, ReadOnly
 from .serializers import (CommentSerializers, GetTokenSerializer,
                           ReviewSerializers, SignUpSerializer,
                           UserAdminSerializer, UserSerializer)
@@ -20,7 +20,8 @@ from .serializers import (CommentSerializers, GetTokenSerializer,
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializers
     pagination_class = PageNumberPagination
-    permission_classes = (IsAuthorModeratorAdminOrReadOnly,)
+    permission_classes = (IsAuthorModeratorAdminOrReadOnly,
+                          IsAuthenticatedOrReadOnly)
     queryset = Review.objects.all()
 
     def get_queryset(self):
@@ -35,7 +36,8 @@ class ReviewViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializers
     pagination_class = PageNumberPagination
-    permission_classes = (IsAuthorModeratorAdminOrReadOnly,)
+    permission_classes = (IsAuthorModeratorAdminOrReadOnly,
+                          IsAuthenticatedOrReadOnly)
     queryset = Comment.objects.all()
 
     def get_queryset(self):
@@ -58,7 +60,7 @@ class CategoryViewSet(CreateListDestroyViewSet):
     queryset = Category.objects.all()
     serializer_class = serializers.CategorySerializer
     pagination_class = PageNumberPagination
-    permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (IsAdmin | ReadOnly,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
@@ -69,7 +71,7 @@ class GenreViewSet(CreateListDestroyViewSet):
     queryset = Genre.objects.all()
     serializer_class = serializers.GenreSerializer
     pagination_class = PageNumberPagination
-    permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (IsAdmin | ReadOnly,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
@@ -78,7 +80,7 @@ class GenreViewSet(CreateListDestroyViewSet):
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     pagination_class = PageNumberPagination
-    permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (IsAdmin | ReadOnly,)
     filterset_class = TitleFilter
 
     def get_serializer_class(self):
