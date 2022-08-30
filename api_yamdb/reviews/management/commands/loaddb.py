@@ -100,4 +100,4 @@ class Command(BaseCommand):
                 for row in reader:
                     print(row)
                     action[filename](row)
-        print("!!!The database has been loaded successfully!!!")
+        self.stdout.write("!!!The database has been loaded successfully!!!"
