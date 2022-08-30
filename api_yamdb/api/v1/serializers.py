@@ -1,10 +1,7 @@
 import datetime as dt
 
-from django.contrib.auth import get_user_model
 from django.db.models import Avg
-from django.shortcuts import get_object_or_404
-from rest_framework import exceptions, serializers
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework import serializers
 from reviews.models import Category, Comment, Genre, Genre_title, Review, Title
 from users.models import User
 
@@ -53,14 +50,16 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ('name', 'slug',)
+        # fields = ('name', 'slug',)
+        exclude = ('id', )
 
 
 class GenreSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Genre
-        fields = ('name', 'slug')
+        # fields = ('name', 'slug')
+        exclude = ('id', )
 
 
 class TitleReadSerializer(serializers.ModelSerializer):
@@ -137,7 +136,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        ordering = ['-username']
+        ordering = ['id']
         fields = (
             'username',
             'email',
@@ -171,7 +170,7 @@ class UserAdminSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        ordering = ['-username']
+        ordering = ['id']
         fields = (
             'username',
             'email',
@@ -215,18 +214,9 @@ class SignUpSerializer(serializers.ModelSerializer):
 
 
 class GetTokenSerializer(serializers.Serializer):
-    username_field = get_user_model().USERNAME_FIELD
+    username = serializers.CharField(required=True)
+    confirmation_code = serializers.CharField(required=True)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields[self.username_field] = serializers.CharField()
-        self.fields['confirmation_code'] = serializers.SlugField()
-
-    def validate(self, attrs):
-        self.user = get_object_or_404(User, username=attrs['username'])
-        if attrs['confirmation_code'] == self.user.confirmation_code:
-            refresh = RefreshToken.for_user(self.user)
-            return {'token': str(refresh.access_token)}
-        raise exceptions.ValidationError(
-            'Проверьте правильность указанных для получения токена данных.'
-        )
+    class Meta:
+        model = User
+        fields = ('username', 'confirmation_code')
