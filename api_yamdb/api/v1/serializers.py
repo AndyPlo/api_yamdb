@@ -1,8 +1,6 @@
-import datetime as dt
-
 from django.db.models import Avg
 from rest_framework import serializers
-from reviews.models import Category, Comment, Genre, Genre_title, Review, Title
+from reviews.models import Category, Comment, Genre, Review, Title
 from users.models import User
 
 
@@ -50,7 +48,6 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        # fields = ('name', 'slug',)
         exclude = ('id', )
 
 
@@ -58,7 +55,6 @@ class GenreSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Genre
-        # fields = ('name', 'slug')
         exclude = ('id', )
 
 
@@ -110,25 +106,6 @@ class TitleCreateSerializer(serializers.ModelSerializer):
 
     def get_rating(self, obj):
         return 0
-
-    def create(self, validated_data):
-        genres = validated_data.pop('genre')
-        title = Title.objects.create(**validated_data)
-        for genre in genres:
-            current_genre = Genre.objects.all().filter(
-                name=genre.name
-            )
-            Genre_title.objects.create(
-                genre=current_genre[0],
-                title=title
-            )
-        return (title)
-
-    def validate_year(self, value):
-        year = dt.date.today().year
-        if (value > year):
-            raise serializers.ValidationError('Проверьте год выпуска!')
-        return value
 
 
 class UserSerializer(serializers.ModelSerializer):

@@ -2,7 +2,7 @@ import uuid
 
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, mixins, permissions, status, viewsets
+from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action, api_view
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import (IsAuthenticated,
@@ -92,7 +92,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     filterset_class = TitleFilter
 
     def get_serializer_class(self):
-        if self.request.method in permissions.SAFE_METHODS:
+        if self.action in ('list', 'retrieve'):
             return TitleReadSerializer
         return TitleCreateSerializer
 

@@ -1,6 +1,8 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 
+from .validators import validate_year
+
 User = get_user_model()
 
 
@@ -40,7 +42,11 @@ class Genre(models.Model):
 
 class Title(models.Model):
     name = models.CharField('Наименование', max_length=200)
-    year = models.IntegerField('Год выпуска')
+    year = models.IntegerField(
+        'Год выпуска',
+        db_index=True,
+        validators=[validate_year]
+    )
     description = models.TextField('Описание')
     genre = models.ManyToManyField(
         Genre,
