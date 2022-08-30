@@ -15,7 +15,8 @@
  1. Установите виртуальное окружение (команда: `python -m venv venv`).
  2. Активируйте виртуальное окружение (команда: `source venv/Scripts/activate`).
  3. Установите зависимости из файла requirements.txt (команда: `pip install -r requirements.txt`).
- 4. Запустите dev-сервер (команда: `python manage.py runserver`).
+ 4. Заполните базу данных (команда: `python manage.py loaddb`)
+ 5. Запустите dev-сервер (команда: `python manage.py runserver`).
 
 ## Документация к API
 
@@ -25,5 +26,7 @@
 ## Авторы
 
  Андрей Плотников (Andy.Plo@yandex.ru)
+
  Максим Бирюков (max.bir4kov@mail.ru)
+
  Сергей Железнов (jeleznov.serj@yandex.ru)

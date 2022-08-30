@@ -1,12 +1,7 @@
 import datetime as dt
-import uuid
 
-from django.contrib.auth import get_user_model
-from django.core.mail import send_mail
 from django.db.models import Avg
-from django.shortcuts import get_object_or_404
-from rest_framework import exceptions, serializers
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework import serializers
 from reviews.models import Category, Comment, Genre, Genre_title, Review, Title
 from users.models import User
 
@@ -55,14 +50,16 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ('name', 'slug',)
+        # fields = ('name', 'slug',)
+        exclude = ('id', )
 
 
 class GenreSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Genre
-        fields = ('name', 'slug')
+        # fields = ('name', 'slug')
+        exclude = ('id', )
 
 
 class TitleReadSerializer(serializers.ModelSerializer):
@@ -139,7 +136,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        ordering = ['-username']
+        ordering = ['id']
         fields = (
             'username',
             'email',
@@ -173,7 +170,7 @@ class UserAdminSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        ordering = ['-username']
+        ordering = ['id']
         fields = (
             'username',
             'email',
@@ -203,74 +200,23 @@ class UserAdminSerializer(serializers.ModelSerializer):
         return data
 
 
-class SignUpSerializer(serializers.Serializer):
-    username_field = get_user_model().USERNAME_FIELD
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields[self.username_field] = serializers.CharField()
-        self.fields['email'] = serializers.EmailField()
-
-    def validate(self, attrs):
-        if self.initial_data.get('username') == 'me':
-            raise serializers.ValidationError(
-                {"username": ["Вы не можете использоват этот username!"]}
-            )
-        if User.objects.filter(
-            username=self.initial_data.get('username')
-        ).exists():
-            raise serializers.ValidationError(
-                {"username": ["Этот username уже зарегистрирован!"]}
-            )
-        if User.objects.filter(
-            email=self.initial_data.get('email')
-        ).exists():
-            raise serializers.ValidationError(
-                {"email": ["Этот email уже зарегистрирован!"]}
-            )
-        return attrs
-
-    def create(self, validated_data):
-        confirmation_code = str(uuid.uuid4()).split("-")[0]
-        user = User.objects.filter(
-            username=validated_data['username'],
-            email=validated_data['email']
-        )
-        if user.exists():
-            user.update(confirmation_code=confirmation_code)
-        else:
-            User.objects.create(
-                username=validated_data['username'],
-                email=validated_data['email'],
-                confirmation_code=confirmation_code
-            )
-        send_mail(
-            'Код подтверждения',
-            (f'Код подтверждения для пользователя "{user[0].username}":'
-                f' {confirmation_code}'),
-            'from@example.com',
-            [validated_data['email']]
-        )
-        return validated_data
-
+class SignUpSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('username', 'email')
 
+    def validate(self, data):
+        if self.initial_data.get('username') == 'me':
+            raise serializers.ValidationError(
+                {"username": ["Вы не можете использоват этот username!"]}
+            )
+        return data
+
 
 class GetTokenSerializer(serializers.Serializer):
-    username_field = get_user_model().USERNAME_FIELD
+    username = serializers.CharField(required=True)
+    confirmation_code = serializers.CharField(required=True)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields[self.username_field] = serializers.CharField()
-        self.fields['confirmation_code'] = serializers.SlugField()
-
-    def validate(self, attrs):
-        self.user = get_object_or_404(User, username=attrs['username'])
-        if attrs['confirmation_code'] == self.user.confirmation_code:
-            refresh = RefreshToken.for_user(self.user)
-            return {'token': str(refresh.access_token)}
-        raise exceptions.ValidationError(
-            'Проверьте правильность указанных для получения токена данных.'
-        )
+    class Meta:
+        model = User
+        fields = ('username', 'confirmation_code')
