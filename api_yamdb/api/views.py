@@ -1,7 +1,10 @@
+import uuid
+
 from api import serializers
+from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from rest_framework import filters, mixins, permissions, status, viewsets
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import (IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
@@ -9,6 +12,8 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from reviews.models import Category, Comment, Genre, Review, Title
 from users.models import User
+
+from api_yamdb.settings import ADMIN_EMAIL
 
 from .filters import TitleFilter
 from .permissions import IsAdmin, IsAuthorModeratorAdminOrReadOnly, ReadOnly
@@ -110,17 +115,32 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class SignUpViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
-    serializer_class = SignUpSerializer
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(
-            serializer.data, status=status.HTTP_200_OK, headers=headers)
-
-
 class GetTokenView(TokenObtainPairView):
     serializer_class = GetTokenSerializer
+
+
+@api_view(['POST'])
+def signup(request):
+    user = User.objects.filter(**request.data)
+    if user.exists():
+        get_and_send_confirmation_code(user)
+        return Response(request.data, status=status.HTTP_200_OK)
+
+    serializer = SignUpSerializer(data=request.data)
+    if serializer.is_valid(raise_exception=True):
+        serializer.save()
+        user = User.objects.filter(**serializer.data)
+        get_and_send_confirmation_code(user)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+def get_and_send_confirmation_code(user):
+    confirmation_code = str(uuid.uuid4()).split("-")[0]
+    user.update(confirmation_code=confirmation_code)
+    send_mail(
+        'Код подтверждения',
+        (f'Код подтверждения для пользователя "{user[0].username}":'
+            f' {user[0].confirmation_code}'),
+        ADMIN_EMAIL,
+        [user[0].email]
+    )

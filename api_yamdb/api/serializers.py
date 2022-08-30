@@ -1,8 +1,6 @@
 import datetime as dt
-import uuid
 
 from django.contrib.auth import get_user_model
-from django.core.mail import send_mail
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from rest_framework import exceptions, serializers
@@ -203,59 +201,17 @@ class UserAdminSerializer(serializers.ModelSerializer):
         return data
 
 
-class SignUpSerializer(serializers.Serializer):
-    username_field = get_user_model().USERNAME_FIELD
+class SignUpSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('username', 'email')
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields[self.username_field] = serializers.CharField()
-        self.fields['email'] = serializers.EmailField()
-
-    def validate(self, attrs):
+    def validate(self, data):
         if self.initial_data.get('username') == 'me':
             raise serializers.ValidationError(
                 {"username": ["Вы не можете использоват этот username!"]}
             )
-        if User.objects.filter(
-            username=self.initial_data.get('username')
-        ).exists():
-            raise serializers.ValidationError(
-                {"username": ["Этот username уже зарегистрирован!"]}
-            )
-        if User.objects.filter(
-            email=self.initial_data.get('email')
-        ).exists():
-            raise serializers.ValidationError(
-                {"email": ["Этот email уже зарегистрирован!"]}
-            )
-        return attrs
-
-    def create(self, validated_data):
-        confirmation_code = str(uuid.uuid4()).split("-")[0]
-        user = User.objects.filter(
-            username=validated_data['username'],
-            email=validated_data['email']
-        )
-        if user.exists():
-            user.update(confirmation_code=confirmation_code)
-        else:
-            User.objects.create(
-                username=validated_data['username'],
-                email=validated_data['email'],
-                confirmation_code=confirmation_code
-            )
-        send_mail(
-            'Код подтверждения',
-            (f'Код подтверждения для пользователя "{user[0].username}":'
-                f' {confirmation_code}'),
-            'from@example.com',
-            [validated_data['email']]
-        )
-        return validated_data
-
-    class Meta:
-        model = User
-        fields = ('username', 'email')
+        return data
 
 
 class GetTokenSerializer(serializers.Serializer):
