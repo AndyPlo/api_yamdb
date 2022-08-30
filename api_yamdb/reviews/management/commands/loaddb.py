@@ -3,6 +3,7 @@ import os
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
+from progress.bar import IncrementalBar
 from reviews.models import Category, Comment, Genre, Genre_title, Review, Title
 from users.models import User
 
@@ -97,7 +98,11 @@ class Command(BaseCommand):
             with open(path, 'r', encoding='utf-8') as file:
                 reader = csv.reader(file)
                 next(reader)
-                for row in reader:
-                    print(row)
-                    action[filename](row)
-        self.stdout.write("!!!The database has been loaded successfully!!!"
+                print(reader)
+                # bar = IncrementalBar(filename, max=len(reader))
+                # for row in reader:
+                #     bar.next()
+                #     print(row)
+                #     action[filename](row)
+                # bar.finish()
+        self.stdout.write("!!!The database has been loaded successfully!!!")
