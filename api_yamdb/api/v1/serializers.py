@@ -1,8 +1,5 @@
-import datetime as dt
-
-from django.db.models import Avg
 from rest_framework import serializers
-from reviews.models import Category, Comment, Genre, Genre_title, Review, Title
+from reviews.models import Category, Comment, Genre, Review, Title
 from users.models import User
 
 
@@ -14,13 +11,6 @@ class ReviewSerializers(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = ('id', 'text', 'author', 'score', 'pub_date')
-
-    def validate_score(self, value):
-        if not 1 <= value <= 10:
-            raise serializers.ValidationError(
-                'Оценка может быть только от 1 до 10!'
-            )
-        return value
 
     def validate(self, data):
         if self.context['request'].method != 'POST':
@@ -50,7 +40,6 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        # fields = ('name', 'slug',)
         exclude = ('id', )
 
 
@@ -58,14 +47,13 @@ class GenreSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Genre
-        # fields = ('name', 'slug')
         exclude = ('id', )
 
 
 class TitleReadSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(many=True, read_only=True)
-    rating = serializers.SerializerMethodField()
+    rating = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Title
@@ -79,17 +67,12 @@ class TitleReadSerializer(serializers.ModelSerializer):
             'genre',
         )
 
-    def get_rating(self, obj):
-        rating = obj.reviews.aggregate(Avg('score')).get('score__avg')
-        return round(rating, 1) if rating else rating
-
 
 class TitleCreateSerializer(serializers.ModelSerializer):
     category = serializers.SlugRelatedField(
         slug_field='slug',
         queryset=Category.objects.all()
     )
-    rating = serializers.SerializerMethodField()
     genre = serializers.SlugRelatedField(
         many=True,
         slug_field='slug',
@@ -102,33 +85,10 @@ class TitleCreateSerializer(serializers.ModelSerializer):
             'id',
             'name',
             'year',
-            'rating',
             'description',
             'category',
             'genre',
         )
-
-    def get_rating(self, obj):
-        return 0
-
-    def create(self, validated_data):
-        genres = validated_data.pop('genre')
-        title = Title.objects.create(**validated_data)
-        for genre in genres:
-            current_genre = Genre.objects.all().filter(
-                name=genre.name
-            )
-            Genre_title.objects.create(
-                genre=current_genre[0],
-                title=title
-            )
-        return (title)
-
-    def validate_year(self, value):
-        year = dt.date.today().year
-        if (value > year):
-            raise serializers.ValidationError('Проверьте год выпуска!')
-        return value
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -150,18 +110,6 @@ class UserSerializer(serializers.ModelSerializer):
         if self.initial_data.get('username') == 'me':
             raise serializers.ValidationError(
                 {"username": ["Вы не можете использоват этот username!"]}
-            )
-        if User.objects.filter(
-            username=self.initial_data.get('username')
-        ).exists():
-            raise serializers.ValidationError(
-                {"username": ["Этот username уже зарегистрирован!"]}
-            )
-        if User.objects.filter(
-            email=self.initial_data.get('email')
-        ).exists():
-            raise serializers.ValidationError(
-                {"email": ["Этот email уже зарегистрирован!"]}
             )
         return data
 
@@ -185,18 +133,6 @@ class UserAdminSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {"username": ["Вы не можете использоват этот username!"]}
             )
-        if User.objects.filter(
-            username=self.initial_data.get('username')
-        ).exists():
-            raise serializers.ValidationError(
-                {"username": ["Этот username уже зарегистрирован!"]}
-            )
-        if User.objects.filter(
-            email=self.initial_data.get('email')
-        ).exists():
-            raise serializers.ValidationError(
-                {"email": ["Этот email уже зарегистрирован!"]}
-            )
         return data
 
 
@@ -214,8 +150,8 @@ class SignUpSerializer(serializers.ModelSerializer):
 
 
 class GetTokenSerializer(serializers.Serializer):
-    username = serializers.CharField(required=True)
-    confirmation_code = serializers.CharField(required=True)
+    username = serializers.SlugField(required=True)
+    confirmation_code = serializers.SlugField(required=True)
 
     class Meta:
         model = User

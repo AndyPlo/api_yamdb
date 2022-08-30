@@ -1,8 +1,9 @@
 import uuid
 
 from django.core.mail import send_mail
+from django.db.models import Avg
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, mixins, permissions, status, viewsets
+from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action, api_view
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import (IsAuthenticated,
@@ -72,7 +73,6 @@ class CategoryViewSet(CreateListDestroyViewSet):
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
-    http_method_names = ['get', 'post', 'delete']
 
 
 class GenreViewSet(CreateListDestroyViewSet):
@@ -86,13 +86,14 @@ class GenreViewSet(CreateListDestroyViewSet):
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all()
+    queryset = Title.objects.annotate(
+        rating=Avg('reviews__score')).order_by('name')
     pagination_class = PageNumberPagination
     permission_classes = (IsAdmin | ReadOnly,)
     filterset_class = TitleFilter
 
     def get_serializer_class(self):
-        if self.request.method in permissions.SAFE_METHODS:
+        if self.action in ('list', 'retrieve'):
             return TitleReadSerializer
         return TitleCreateSerializer
 
@@ -156,8 +157,7 @@ def token(request):
 
 
 def get_and_send_confirmation_code(user):
-    confirmation_code = str(uuid.uuid4()).split("-")[0]
-    user.update(confirmation_code=confirmation_code)
+    user.update(confirmation_code=str(uuid.uuid4()).split("-")[0])
     send_mail(
         'Код подтверждения',
         (f'Код подтверждения для пользователя "{user[0].username}":'
