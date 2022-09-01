@@ -95,11 +95,11 @@ class UserSerializer(serializers.ModelSerializer):
     """
     Сериалайзер для эндпоинта 'users/me/' для любого авторизов. пользователя.
     [GET] персональные данные пользователя.
-    [POST] заполнение полей 'first_name', 'last_name' и 'bio'.
+    [PATCH] заполнение полей 'first_name', 'last_name' и 'bio'.
     """
     role = serializers.StringRelatedField(read_only=True)
-    username = serializers.SlugField(required=True)
-    email = serializers.SlugField(required=True)
+    username = serializers.SlugField(read_only=True)
+    email = serializers.SlugField(read_only=True)
 
     class Meta:
         model = User
