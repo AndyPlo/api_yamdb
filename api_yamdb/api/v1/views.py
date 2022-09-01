@@ -10,8 +10,7 @@ from rest_framework.permissions import (IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.views import TokenObtainPairView
-from reviews.models import Category, Comment, Genre, Review, Title
+from reviews.models import Category, Genre, Review, Title
 from users.models import User
 
 from api_yamdb.settings import ADMIN_EMAIL
@@ -30,14 +29,19 @@ class ReviewViewSet(viewsets.ModelViewSet):
     pagination_class = PageNumberPagination
     permission_classes = (IsAuthorModeratorAdminOrReadOnly,
                           IsAuthenticatedOrReadOnly)
-    queryset = Review.objects.all()
 
     def get_queryset(self):
-        title = get_object_or_404(Title, pk=self.kwargs['title_id'])
+        title = get_object_or_404(
+            Title,
+            pk=self.kwargs['title_id']
+        )
         return title.reviews.all()
 
     def perform_create(self, serializer):
-        title = get_object_or_404(Title, pk=self.kwargs['title_id'])
+        title = get_object_or_404(
+            Title,
+            pk=self.kwargs['title_id']
+        )
         serializer.save(author=self.request.user, title=title)
 
 
@@ -46,14 +50,21 @@ class CommentViewSet(viewsets.ModelViewSet):
     pagination_class = PageNumberPagination
     permission_classes = (IsAuthorModeratorAdminOrReadOnly,
                           IsAuthenticatedOrReadOnly)
-    queryset = Comment.objects.all()
 
     def get_queryset(self):
-        review = get_object_or_404(Review, pk=self.kwargs['review_id'])
+        review = get_object_or_404(
+            Review,
+            pk=self.kwargs['review_id'],
+            title=self.kwargs['title_id']
+        )
         return review.comments.all()
 
     def perform_create(self, serializer):
-        review = get_object_or_404(Review, pk=self.kwargs['review_id'])
+        review = get_object_or_404(
+            Review,
+            pk=self.kwargs['review_id'],
+            title=self.kwargs['title_id']
+        )
         serializer.save(author=self.request.user, review=review)
 
 
@@ -118,10 +129,6 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-class GetTokenView(TokenObtainPairView):
-    serializer_class = GetTokenSerializer
 
 
 @api_view(['POST'])

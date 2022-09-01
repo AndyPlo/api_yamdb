@@ -92,7 +92,14 @@ class TitleCreateSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    """
+    Сериалайзер для эндпоинта 'users/me/' для любого авторизов. пользователя.
+    [GET] персональные данные пользователя.
+    [POST] заполнение полей 'first_name', 'last_name' и 'bio'.
+    """
     role = serializers.StringRelatedField(read_only=True)
+    username = serializers.SlugField(required=True)
+    email = serializers.SlugField(required=True)
 
     class Meta:
         model = User
@@ -106,16 +113,14 @@ class UserSerializer(serializers.ModelSerializer):
             'role'
         )
 
-    def validate(self, data):
-        if self.initial_data.get('username') == 'me':
-            raise serializers.ValidationError(
-                {"username": ["Вы не можете использоват этот username!"]}
-            )
-        return data
-
 
 class UserAdminSerializer(serializers.ModelSerializer):
-
+    """
+    Сериалайзер для эндпоинта 'users/' для пользователя с ролью 'admin'.
+    [GET] получение списка пользователей.
+    [POST] регистрация нового пользователя.
+    [GET, PATCH, DELETE] работа с пользователем по username.
+    """
     class Meta:
         model = User
         ordering = ['id']
